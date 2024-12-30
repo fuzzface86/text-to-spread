@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Card Data Import & Export</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        input[type="file"] {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Card Data Import & Export</h1>
+
+<input type="file" id="fileInput" multiple>
+<button onclick="processFiles()">Process Files</button>
+<button onclick="clearTable()">Clear Table</button>
+<button onclick="exportToExcel()">Export to Excel</button>
+<table id="cardTable">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Stats</th>
+            <th>Abilities</th>
+            <th>Credits</th>
+            <th>Flavor Text</th>
+        </tr>
+    </thead>
+    <tbody>
+    </tbody>
+</table>
+
+<script>
+    function processFiles() {
+        const fileInput = document.getElementById('fileInput');
+        const table = document.getElementById('cardTable').getElementsByTagName('tbody')[0];
+
+        Array.from(fileInput.files).forEach(file => {
+            const reader = new FileReader();
+
+            reader.onload = function(event) {
+                const lines = event.target.result.split('\n');
+                const cardData = {};
+
+                lines.forEach(line => {
+                    const [key, ...value] = line.split(':');
+                    if (key && value) {
+                        cardData[key.trim()] = value.join(':').trim();
+                    }
+                });
+
+                const newRow = table.insertRow();
+                newRow.innerHTML = `
+                    <td>${cardData.Name || ''}</td>
+                    <td>${cardData.Type || ''}</td>
+                    <td>${cardData.Stats || ''}</td>
+                    <td>${cardData.Abilities || ''}</td>
+                    <td>${cardData.Credits || ''}</td>
+                    <td>${cardData["Flavor Text"] || ''}</td>
+                `;
+            };
+
+            reader.readAsText(file);
+        });
+    }
+
+    function clearTable() {
+        const table = document.getElementById('cardTable').getElementsByTagName('tbody')[0];
+        table.innerHTML = ""; // Remove all rows from the table body
+        document.getElementById('fileInput').value = ""; // Clear the file input
+    }
+
+    function exportToExcel() {
+        const table = document.getElementById('cardTable');
+        const rows = Array.from(table.rows);
+
+        const headers = ["Name", "Type", "Stats", "Abilities", "Credits", "Flavor Text"];
+        const data = rows.map((row, rowIndex) => {
+            const cells = Array.from(row.cells);
+            if (rowIndex === 0) {
+                return headers;
+            } else {
+                return headers.map((_, colIndex) => {
+                    const cellContent = cells[colIndex]?.innerText || "";
+                    const escapedContent = cellContent.replace(/"/g, '""');
+                    return `"${escapedContent}"`;
+                });
+            }
+        });
+
+        const csvContent = data.map(row => row.join(",")).join("\n");
+
+        const blob = new Blob([csvContent], { type: "text/csv" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+
+        a.href = url;
+        a.download = 'card_data.csv';
+        a.click();
+
+        URL.revokeObjectURL(url);
+    }
+</script>
+
+</body>
+</html>
