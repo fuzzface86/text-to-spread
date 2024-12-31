@@ -20,7 +20,8 @@ function processFiles() {
             newRow.innerHTML = `
                 <td>${cardData.Name || ''}</td>
                 <td>${cardData.Type || ''}</td>
-                <td>${cardData.Stats || ''}</td>
+                <td>${cardData.Faction || ''}</td>
+                <td>${cardData["Power Level"] || cardData.Stats || ''}</td>
                 <td>${cardData.Abilities || ''}</td>
                 <td>${cardData.Credits || ''}</td>
                 <td>${cardData["Flavor Text"] || ''}</td>
@@ -31,32 +32,32 @@ function processFiles() {
     });
 }
 
+function clearTable() {
+    const table = document.getElementById('cardTable').getElementsByTagName('tbody')[0];
+    table.innerHTML = ""; // Remove all rows from the table body
+    document.getElementById('fileInput').value = ""; // Clear the file input
+}
+
 function exportToExcel() {
     const table = document.getElementById('cardTable');
     const rows = Array.from(table.rows);
 
-    // Ensure the correct column order by explicitly defining the headers
-    const headers = ["Name", "Type", "Stats", "Abilities", "Credits", "Flavor Text"];
+    const headers = ["Name", "Type", "Faction", "Power Level", "Abilities", "Credits", "Flavor Text"];
     const data = rows.map((row, rowIndex) => {
         const cells = Array.from(row.cells);
         if (rowIndex === 0) {
-            // Return headers as the first row
             return headers;
         } else {
-            // Map headers to corresponding cells
             return headers.map((_, colIndex) => {
                 const cellContent = cells[colIndex]?.innerText || "";
-                // Escape double quotes and wrap fields containing special characters
-                const escapedContent = cellContent.replace(/"/g, '""'); // Escape double quotes
-                return `"${escapedContent}"`; // Always wrap content in double quotes
+                const escapedContent = cellContent.replace(/"/g, '""');
+                return `"${escapedContent}"`;
             });
         }
     });
 
-    // Convert the data to CSV
     const csvContent = data.map(row => row.join(",")).join("\n");
 
-    // Create and trigger download
     const blob = new Blob([csvContent], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
